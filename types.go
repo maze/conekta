@@ -1,6 +1,8 @@
 package gonekta
 
 import (
+	"encoding/json"
+	//"fmt"
 	"menteslibres.net/gosexy/rest"
 	"menteslibres.net/gosexy/to"
 	"time"
@@ -9,6 +11,10 @@ import (
 type Conekta struct {
 	client *rest.Client
 	key    string
+}
+
+type object_t struct {
+	Type string `json:"object"`
 }
 
 type Address struct {
@@ -35,8 +41,8 @@ type Shipment struct {
 
 type Card struct {
 	Number   string   `json:"number"`
-	ExpMonth int      `json:"exp_month"`
-	ExpYear  int      `json:"exp_year"`
+	ExpMonth string   `json:"exp_month"` // Should be int
+	ExpYear  string   `json:"exp_year"`  // Should be int
 	Name     string   `json:"name"`
 	CVC      int      `json:"cvc"`
 	Address  *Address `json:"address"`
@@ -63,65 +69,54 @@ type Details struct {
 }
 
 type Cash struct {
-	Type string `json:"type"`
+	Type       string `json:"type"`
+	ExpiryDate string `json:"expiry_date,omitempty"`
+	BarCode    string `json:"barcode,omitempty"`
+	CarCodeURL string `json:"barcode_url,omitempty"`
 }
 
 type Bank struct {
-	Name string `json:"name"`
+	Type          string `json:"type"` // docs error.
+	ServiceName   string `json:"service_name"`
+	ServiceNumber string `json:"service_number"`
+	Reference     string `json:"reference"`
 }
 
 type Time struct {
 	time.Time
 }
 
+type PaymentMethod struct {
+	Card *Card `json:"card,omitempty"`
+	Cash *Cash `json:"cash,omitempty"`
+	Bank *Bank `json:"bank,omitempty"`
+}
+
+type PaymentRequest struct {
+	Description string   `json:"description"`
+	Amount      uint     `json:"amount"`
+	Currency    string   `json:"currency"`
+	ReferenceId string   `json:"reference_id"`
+	Details     *Details `json:"details"`
+
+	Card *Card `json:"card,omitempty"`
+	Cash *Cash `json:"cash,omitempty"`
+	Bank *Bank `json:"bank,omitempty"`
+}
+
 type Payment struct {
-	Id             string                 `json:"id"`
-	Livemode       bool                   `json:"livemode"`
-	CreatedAt      Time                   `json:"created_at"`
-	Status         string                 `json:"status"`
-	Description    string                 `json:"description"`
-	Amount         uint                   `json:"amount"`
-	Currency       string                 `json:"currency"`
-	PaymentMethod  map[string]interface{} `json:"payment_method"`
-	Details        *Details               `json:"details"`
-	ReferenceId    string                 `json:"reference_id"`
-	FailureCode    string                 `json:"failure_code"`
-	FailureMessage string                 `json:"failure_message"`
-}
-
-type basePayment struct {
-	Description string `json:"description"`
-	Amount      uint   `json:"amount"`
-	Currency    string `json:"currency"`
-	ReferenceId string `json:"reference_id"`
-	Details     *Details
-}
-
-type CardPayment struct {
-	Description string   `json:"description"`
-	Amount      uint     `json:"amount"`
-	Currency    string   `json:"currency"`
-	ReferenceId string   `json:"reference_id"`
-	Details     *Details `json:"details"`
-	Card        *Card    `json:"card"`
-}
-
-type CashPayment struct {
-	Description string   `json:"description"`
-	Amount      uint     `json:"amount"`
-	Currency    string   `json:"currency"`
-	ReferenceId string   `json:"reference_id"`
-	Details     *Details `json:"details"`
-	Cash        *Cash    `json:"cash"`
-}
-
-type BankPayment struct {
-	Description string   `json:"description"`
-	Amount      uint     `json:"amount"`
-	Currency    string   `json:"currency"`
-	ReferenceId string   `json:"reference_id"`
-	Details     *Details `json:"details"`
-	Bank        *Bank    `json:"bank"`
+	Id             string         `json:"id"`
+	Livemode       bool           `json:"livemode"`
+	CreatedAt      Time           `json:"created_at"`
+	Status         string         `json:"status"`
+	Description    string         `json:"description"`
+	Amount         uint           `json:"amount"`
+	Currency       string         `json:"currency"`
+	PaymentMethod  *PaymentMethod `json:"payment_method"`
+	Details        *Details       `json:"details"`
+	ReferenceId    string         `json:"reference_id"`
+	FailureCode    string         `json:"failure_code"`
+	FailureMessage string         `json:"failure_message"`
 }
 
 type RefundRequest struct {
@@ -157,5 +152,40 @@ func (self *Time) MarshalJSON() ([]byte, error) {
 func (self *Time) UnmarshalJSON(b []byte) error {
 	u := to.Int64(b)
 	self.Time = time.Unix(u, 0)
+	return nil
+}
+
+func (self *PaymentMethod) UnmarshalJSON(b []byte) error {
+	var t object_t
+
+	err := json.Unmarshal(b, &t)
+
+	if err != nil {
+		return err
+	}
+
+	switch t.Type {
+	case "card_payment":
+		self.Card = &Card{}
+		err = json.Unmarshal(b, self.Card)
+		if err != nil {
+			return err
+		}
+	case "cash_payment":
+		self.Cash = &Cash{}
+		err = json.Unmarshal(b, self.Cash)
+		if err != nil {
+			return err
+		}
+	case "bank_transfer_payment":
+		self.Bank = &Bank{}
+		err = json.Unmarshal(b, self.Bank)
+		if err != nil {
+			return err
+		}
+	}
+
+	//fmt.Printf("unmarshal: %v\n", string(b))
+
 	return nil
 }

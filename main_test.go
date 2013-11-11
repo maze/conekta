@@ -1,7 +1,6 @@
 package gonekta
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -11,15 +10,15 @@ const (
 
 func TestCreditCard(t *testing.T) {
 
-	payment := &CardPayment{
+	payment := &PaymentRequest{
 		Amount:      20000,
 		Currency:    "mxn",
 		ReferenceId: "000-stoogies",
 		Description: "Stoogies",
 		Card: &Card{
 			Number:   "4111111111111111",
-			ExpMonth: 12,
-			ExpYear:  2015,
+			ExpMonth: "12",
+			ExpYear:  "2015",
 			Name:     "Thomas Logan",
 			CVC:      666,
 			Address: &Address{
@@ -34,27 +33,40 @@ func TestCreditCard(t *testing.T) {
 
 	client := New(testKey)
 
-	res, err := client.Pay(payment)
-
-	fmt.Printf("GOT %v\n", res.Payment)
-	fmt.Printf("GOT %v\n", res.Error)
+	res, err := client.Charge(payment)
 
 	if err != nil {
 		t.Fatalf(err.Error())
+	}
+
+	if res.Payment == nil {
+		t.Fatalf("Expecting payment.")
+	}
+
+	if res.Payment.PaymentMethod == nil {
+		t.Fatalf("Expecting payment method.")
+	}
+
+	if res.Payment.PaymentMethod.Card == nil {
+		t.Fatalf("Expecting payment card.")
+	}
+
+	if res.Payment.PaymentMethod.Card.Address == nil {
+		t.Fatalf("Expecting payment address.")
 	}
 }
 
 func TestAdvancedCreditCard(t *testing.T) {
 
-	payment := &CardPayment{
+	payment := &PaymentRequest{
 		Amount:      20000,
 		Currency:    "mxn",
 		ReferenceId: "000-stoogies",
 		Description: "Stoogies",
 		Card: &Card{
 			Number:   "4111111111111111",
-			ExpMonth: 12,
-			ExpYear:  2015,
+			ExpMonth: "12",
+			ExpYear:  "2015",
 			Name:     "Thomas Logan",
 			CVC:      666,
 			Address: &Address{
@@ -109,19 +121,32 @@ func TestAdvancedCreditCard(t *testing.T) {
 
 	client := New(testKey)
 
-	res, err := client.Pay(payment)
-
-	fmt.Printf("GOT %v\n", res.Payment)
-	fmt.Printf("GOT %v\n", res.Error)
+	res, err := client.Charge(payment)
 
 	if err != nil {
 		t.Fatalf(err.Error())
+	}
+
+	if res.Payment == nil {
+		t.Fatalf("Expecting payment.")
+	}
+
+	if res.Payment.PaymentMethod == nil {
+		t.Fatalf("Expecting payment method.")
+	}
+
+	if res.Payment.PaymentMethod.Card == nil {
+		t.Fatalf("Expecting payment card.")
+	}
+
+	if res.Payment.PaymentMethod.Card.Address == nil {
+		t.Fatalf("Expecting payment address.")
 	}
 }
 
 func TestCash(t *testing.T) {
 
-	payment := &CashPayment{
+	payment := &PaymentRequest{
 		Amount:      20000,
 		Currency:    "mxn",
 		Description: "DVD - Zorro",
@@ -135,19 +160,29 @@ func TestCash(t *testing.T) {
 
 	client := New(testKey)
 
-	res, err := client.Pay(payment)
-
-	fmt.Printf("GOT %v\n", res.Payment)
-	fmt.Printf("GOT %v\n", res.Error)
+	res, err := client.Charge(payment)
 
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
+
+	if res.Payment == nil {
+		t.Fatalf("Expecting payment.")
+	}
+
+	if res.Payment.PaymentMethod == nil {
+		t.Fatalf("Expecting payment method.")
+	}
+
+	if res.Payment.PaymentMethod.Cash == nil {
+		t.Fatalf("Expecting payment on cash.")
+	}
+
 }
 
 func TestBank(t *testing.T) {
 
-	payment := &BankPayment{
+	payment := &PaymentRequest{
 		Amount:      20000,
 		Currency:    "mxn",
 		Description: "DVD - Zorro",
@@ -157,21 +192,36 @@ func TestBank(t *testing.T) {
 			Phone: "403-342-0642",
 		},
 		Bank: &Bank{
-			Name: "banorte",
+			Type: "banorte",
 		},
 	}
 
 	client := New(testKey)
 
-	res, err := client.Pay(payment)
-
-	fmt.Printf("GOT %v\n", res.Payment)
-	fmt.Printf("GOT %v\n", res.Error)
+	res, err := client.Charge(payment)
 
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
+
+	if res.Payment == nil {
+		t.Fatalf("Expecting payment.")
+	}
+
+	if res.Payment.PaymentMethod == nil {
+		t.Fatalf("Expecting payment method.")
+	}
+
+	if res.Payment.PaymentMethod.Bank == nil {
+		t.Fatalf("Expecting payment bank.")
+	}
+
+	if res.Payment.PaymentMethod.Bank.Reference == "" {
+		t.Fatalf("Expecting payment reference.")
+	}
 }
+
+/*
 
 func TestGet(t *testing.T) {
 	client := New(testKey)
@@ -206,9 +256,10 @@ func TestRefund(t *testing.T) {
 func TestAll(t *testing.T) {
 	client := New(testKey)
 
-	_, err := client.Find()
+	_, err := client.Find(nil)
 
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
 }
+*/
