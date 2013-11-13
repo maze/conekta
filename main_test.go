@@ -2,11 +2,14 @@ package gonekta
 
 import (
 	"testing"
+	//"fmt"
 )
 
 const (
 	testKey = `1tv5yJp3xnVZ7eK67m4h`
 )
+
+var paymentId string
 
 func TestCreditCard(t *testing.T) {
 
@@ -142,6 +145,8 @@ func TestAdvancedCreditCard(t *testing.T) {
 	if res.Payment.PaymentMethod.Card.Address == nil {
 		t.Fatalf("Expecting payment address.")
 	}
+
+	paymentId = res.Payment.Id
 }
 
 func TestCash(t *testing.T) {
@@ -221,45 +226,78 @@ func TestBank(t *testing.T) {
 	}
 }
 
-/*
-
-func TestGet(t *testing.T) {
+func TestRetrieve(t *testing.T) {
 	client := New(testKey)
 
-	res, err := client.Get("527fa64f8ee31e4db6000708")
-
-	if res != nil {
-		fmt.Printf("GOT %v\n", res.Payment)
-		fmt.Printf("GOT %v\n", res.Error)
-	}
+	res, err := client.Retrieve(paymentId)
 
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
+
+	if res.Payment == nil {
+		t.Fatalf("Expecting payment.")
+	}
+
+	if res.Payment.PaymentMethod == nil {
+		t.Fatalf("Expecting payment method.")
+	}
+
+	if res.Payment.PaymentMethod.Card == nil {
+		t.Fatalf("Expecting payment card.")
+	}
+
+	if res.Payment.PaymentMethod.Card.Address == nil {
+		t.Fatalf("Expecting payment address.")
+	}
+
 }
 
 func TestRefund(t *testing.T) {
 	client := New(testKey)
 
-	res, err := client.Refund("527fa64f8ee31e4db6000708")
-
-	if res != nil {
-		fmt.Printf("GOT %v\n", res.Payment)
-		fmt.Printf("GOT %v\n", res.Error)
-	}
+	res, err := client.Retrieve(paymentId)
 
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
+
+	var ref *PaymentResponse
+
+	ref, err = res.Refund()
+
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	if ref.Payment == nil {
+		t.Fatalf("Expecting payment.")
+	}
+
+	if ref.Payment.PaymentMethod == nil {
+		t.Fatalf("Expecting payment method.")
+	}
+
+	if ref.Payment.PaymentMethod.Card == nil {
+		t.Fatalf("Expecting payment card.")
+	}
+
+	if ref.Payment.PaymentMethod.Card.Address == nil {
+		t.Fatalf("Expecting payment address.")
+	}
 }
 
-func TestAll(t *testing.T) {
+func TestFindAll(t *testing.T) {
 	client := New(testKey)
 
-	_, err := client.Find(nil)
+	res, err := client.All(nil)
 
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
+
+	if len(res) == 0 {
+		t.Fatalf("Expecting some charges.")
+	}
+
 }
-*/

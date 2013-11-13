@@ -3,7 +3,8 @@ package gonekta
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
+	//"fmt"
+	"errors"
 	"menteslibres.net/gosexy/rest"
 	"net/url"
 )
@@ -14,10 +15,10 @@ const (
 )
 
 var (
-	privateKey = ""
+	ErrMissingId = errors.New(`Missing charge ID.`)
 )
 
-func New(s string) *Conekta {
+func New(apiKey string) *Conekta {
 	var err error
 	self := &Conekta{}
 
@@ -28,22 +29,19 @@ func New(s string) *Conekta {
 
 	self.client.Header.Add(`Accept`, apiVersion)
 	self.client.Header.Add(`Content-Type`, `application/json`)
-	self.SetKey(s)
+
+	self.SetAPIKey(apiKey)
 	return self
 }
 
-func (self *Conekta) SetKey(s string) error {
-	self.key = s
-	self.client.Header.Set(`Authorization`, `Basic `+base64.StdEncoding.EncodeToString([]byte(self.key+":")))
+func (self *Conekta) SetAPIKey(s string) error {
+	self.apiKey = s
+	self.client.Header.Set(`Authorization`, `Basic `+base64.StdEncoding.EncodeToString([]byte(self.apiKey+":")))
 	return nil
 }
 
-func (self *Conekta) postRaw(dest interface{}, endpoint string, data []byte) error {
-	return self.client.PostRaw(dest, endpoint, data)
-}
-
 func (self *Conekta) Charge(payment *PaymentRequest) (*PaymentResponse, error) {
-	var res PaymentResponse
+	var res *PaymentResponse
 
 	data, err := json.Marshal(payment)
 
@@ -52,38 +50,26 @@ func (self *Conekta) Charge(payment *PaymentRequest) (*PaymentResponse, error) {
 	}
 
 	var buf []byte
-	err = self.postRaw(&buf, "charges", data)
+	err = self.client.PostRaw(&buf, "charges", data)
 
 	if err != nil {
 		return nil, err
 	}
 
-	var t object_t
-	err = json.Unmarshal(buf, &t)
+	res = &PaymentResponse{}
+	err = json.Unmarshal(buf, res)
 
 	if err != nil {
 		return nil, err
 	}
 
-	switch t.Type {
-	case "error":
-		res.Error = &Error{}
-		err = json.Unmarshal(buf, res.Error)
-		if err != nil {
-			return nil, err
-		}
-	default:
-		res.Payment = &Payment{}
-		err = json.Unmarshal(buf, res.Payment)
-		if err != nil {
-			return nil, err
-		}
-	}
+	res.client = self.client
 
-	return &res, nil
+	return res, nil
 }
 
-func (self *Conekta) Get(key string) (*PaymentResponse, error) {
+func (self *Conekta) Retrieve(key string) (*PaymentResponse, error) {
+	var res *PaymentResponse
 	var buf []byte
 	err := self.client.Get(&buf, "charges/"+key, nil)
 
@@ -91,26 +77,64 @@ func (self *Conekta) Get(key string) (*PaymentResponse, error) {
 		return nil, err
 	}
 
-	fmt.Printf("BYTES: %v\n", string(buf))
-
-	return nil, nil
-}
-
-func (self *Conekta) Refund(key string) (*PaymentResponse, error) {
-	var buf []byte
-	err := self.client.Get(&buf, "charges/"+key+"/refund", nil)
+	res = &PaymentResponse{}
+	err = json.Unmarshal(buf, res)
 
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Printf("BYTES: %v\n", string(buf))
+	res.client = self.client
 
-	return nil, nil
+	return res, nil
 }
 
-func (self *Conekta) Find(params []url.Values) ([]*PaymentResponse, error) {
-	return nil, nil
+func (self *PaymentResponse) Refund() (*PaymentResponse, error) {
+	var res *PaymentResponse
+
+	if self.Id == "" {
+		return nil, ErrMissingId
+	}
+
+	var buf []byte
+	err := self.client.PostRaw(&buf, "charges/"+self.Id+"/refund", nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res = &PaymentResponse{}
+	err = json.Unmarshal(buf, res)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res.client = self.client
+
+	return res, nil
+}
+
+func (self *Conekta) All(params url.Values) ([]*PaymentResponse, error) {
+	var buf []byte
+	err := self.client.Get(&buf, "charges", params)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res := []*PaymentResponse{}
+	err = json.Unmarshal(buf, &res)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range res {
+		res[i].client = self.client
+	}
+
+	return res, nil
 }
 
 func (self *Conekta) Events() ([]*Event, error) {

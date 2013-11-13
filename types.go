@@ -2,15 +2,20 @@ package gonekta
 
 import (
 	"encoding/json"
-	//"fmt"
+	"errors"
+	"fmt"
 	"menteslibres.net/gosexy/rest"
 	"menteslibres.net/gosexy/to"
 	"time"
 )
 
+var (
+	ErrUnknownObjectType = errors.New(`Unknown object type "%s".`)
+)
+
 type Conekta struct {
 	client *rest.Client
-	key    string
+	apiKey string
 }
 
 type object_t struct {
@@ -45,6 +50,9 @@ type Card struct {
 	ExpYear  string   `json:"exp_year"`  // Should be int
 	Name     string   `json:"name"`
 	CVC      int      `json:"cvc"`
+	AuthCode string   `json:"auth_code"`
+	LastFour string   `json:"last4"`
+	Brand    string   `json:"brand"`
 	Address  *Address `json:"address"`
 }
 
@@ -135,6 +143,7 @@ type Event struct {
 type PaymentResponse struct {
 	*Payment
 	*Error
+	client *rest.Client
 }
 
 type Error struct {
@@ -183,9 +192,38 @@ func (self *PaymentMethod) UnmarshalJSON(b []byte) error {
 		if err != nil {
 			return err
 		}
+	default:
+		return fmt.Errorf(ErrUnknownObjectType.Error(), t.Type)
 	}
 
-	//fmt.Printf("unmarshal: %v\n", string(b))
+	return nil
+}
+
+func (self *PaymentResponse) UnmarshalJSON(b []byte) error {
+	var t object_t
+
+	err := json.Unmarshal(b, &t)
+
+	if err != nil {
+		return err
+	}
+
+	switch t.Type {
+	case "error":
+		self.Error = &Error{}
+		err = json.Unmarshal(b, self.Error)
+		if err != nil {
+			return err
+		}
+	case "charge":
+		self.Payment = &Payment{}
+		err = json.Unmarshal(b, self.Payment)
+		if err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf(ErrUnknownObjectType.Error(), t.Type)
+	}
 
 	return nil
 }
