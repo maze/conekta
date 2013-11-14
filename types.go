@@ -1,4 +1,4 @@
-package gonekta
+package conekta
 
 import (
 	"encoding/json"
