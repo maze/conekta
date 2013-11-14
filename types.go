@@ -133,11 +133,15 @@ type RefundRequest struct {
 }
 
 type Event struct {
-	Id        string      `json:"id"`
-	Livemode  bool        `json:"livemode"`
-	CreatedAt Time        `json:"created_at"`
-	Type      string      `json:"type"`
-	Data      interface{} `json:"data"`
+	Id        string     `json:"id"`
+	Livemode  bool       `json:"livemode"`
+	CreatedAt Time       `json:"created_at"`
+	Type      string     `json:"type"`
+	Data      *EventData `json:"data"`
+}
+
+type EventData struct {
+	Object *PaymentResponse `json:"object"`
 }
 
 type PaymentResponse struct {

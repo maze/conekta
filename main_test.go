@@ -2,7 +2,6 @@ package gonekta
 
 import (
 	"testing"
-	//"fmt"
 )
 
 const (
@@ -298,6 +297,20 @@ func TestFindAll(t *testing.T) {
 
 	if len(res) == 0 {
 		t.Fatalf("Expecting some charges.")
+	}
+}
+
+func TestEvents(t *testing.T) {
+	client := New(testKey)
+
+	res, err := client.Events()
+
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	if len(res) == 0 {
+		t.Fatalf("Expecting some events.")
 	}
 
 }

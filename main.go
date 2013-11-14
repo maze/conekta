@@ -138,5 +138,19 @@ func (self *Conekta) All(params url.Values) ([]*PaymentResponse, error) {
 }
 
 func (self *Conekta) Events() ([]*Event, error) {
-	return nil, nil
+	var buf []byte
+	err := self.client.Get(&buf, "events", nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res := []*Event{}
+	err = json.Unmarshal(buf, &res)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }
