@@ -57,7 +57,7 @@ Pass the payment value you've just created to the conekta client.
 res, err := client.Charge(payment)
 ```
 
-## Default client (single operations)
+## Default client (for single operations)
 
 A default client is also provided with the package, so you can use API
 calls as you would in single threaded Ruby or Python clients. If you're
@@ -72,6 +72,10 @@ conekta.SetAPIKey(`1tv5yJp3xnVZ7eK67m4h`)
 
 res, err = conekta.Charge(payment)
 ```
+
+## Documentation
+
+See full documentation at [godoc.org][3].
 
 ## License
 
@@ -98,3 +102,4 @@ res, err = conekta.Charge(payment)
 
 [1]: https://www.conekta.io
 [2]: https://www.conekta.io/docs/api
+[3]: http://godoc.org/github.com/maze/conekta
