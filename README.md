@@ -1,6 +1,7 @@
-# Conekta wrapper for Go
+# Conekta client for Go
 
-This is a Go client package for the [Conekta][1] [REST API][2].
+This is a Go client package for the [Conekta][1] [REST API][2] for online and
+offline payments.
 
 ## Installation
 
@@ -16,7 +17,7 @@ Import the `github.com/maze/conekta` package.
 
 ```go
 import (
-	"https://github.com/maze/conekta"
+	"github.com/maze/conekta"
 )
 ```
 
