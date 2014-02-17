@@ -3,6 +3,10 @@
 This is a Go client package for the [Conekta][1] [REST API][2] for online and
 offline payments.
 
+This package was designed for v0.2.0 and is kept here for reference. If you're
+looking to work with an actively developed library that supports Conekta v0.3.0
+you should take a look at [Boletia/conekta-go][4].
+
 ## Installation
 
 Pull the package with `go get`, as usual.
@@ -104,3 +108,4 @@ See full documentation at [godoc.org][3].
 [1]: https://www.conekta.io
 [2]: https://www.conekta.io/docs/api
 [3]: http://godoc.org/github.com/maze/conekta
+[4]: https://github.com/Boletia/conekta-go
